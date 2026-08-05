@@ -25,6 +25,10 @@ but server-side and for Java plugins**.
 The API version always matches the first two segments of the BlueSpoof release that ships it
 (this release is `3.7`, shipped with BlueSpoof 3.7.0).
 
+This library only compiles against the API surface; the BlueSpoof plugin itself must be
+installed on the server for any of it to work. Get it at
+[blueva.net/store/blue-spoof](https://blueva.net/store/blue-spoof).
+
 ## Installation
 
 The API classes are shaded (unrelocated) into the BlueSpoof plugin jar, so your plugin only
