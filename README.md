@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-3.7-blue">
+  <img alt="Version" src="https://img.shields.io/badge/version-3.9-blue">
   <img alt="Kotlin" src="https://img.shields.io/badge/Kotlin-2.4.10-7F52FF?logo=kotlin&logoColor=white">
   <img alt="Java" src="https://img.shields.io/badge/Java-8+-ED8B00?logo=openjdk&logoColor=white">
   <img alt="Build" src="https://img.shields.io/badge/build-Gradle-02303A?logo=gradle&logoColor=white">
@@ -23,7 +23,7 @@ camera, jump, attack, chat, and walk to goals with A* pathfinding. Think of it a
 but server-side and for Java plugins**.
 
 The API version always matches the first two segments of the BlueSpoof release that ships it
-(this release is `3.7`, shipped with BlueSpoof 3.7.0).
+(this release is `3.9`, shipped with BlueSpoof 3.9.0).
 
 This library only compiles against the API surface; the BlueSpoof plugin itself must be
 installed on the server for any of it to work. Get it at
@@ -47,7 +47,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("net.blueva.spoof:BlueSpoof-API:3.7")
+    compileOnly("net.blueva.spoof:BlueSpoof-API:3.9")
 }
 ```
 
@@ -64,7 +64,7 @@ dependencies {
 <dependency>
     <groupId>net.blueva.spoof</groupId>
     <artifactId>BlueSpoof-API</artifactId>
-    <version>3.7</version>
+    <version>3.9</version>
     <scope>provided</scope>
 </dependency>
 ```

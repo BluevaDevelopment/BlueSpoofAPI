@@ -6,6 +6,7 @@ import org.bukkit.Location
 import org.bukkit.entity.Entity
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
+import org.bukkit.util.Vector
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 
@@ -98,6 +99,19 @@ interface Actuator {
      * @since 3.9
      */
     fun sprintJump(): CompletableFuture<Void>
+
+    /**
+     * Sets the fake player's velocity. Vanilla physics (gravity, friction, collisions) takes over
+     * from the next tick, exactly like knockback landing on a real player.
+     *
+     * This is a real thing a client experiences, not a shortcut around movement: use it for
+     * launches, knockback and anything else the server would do to a player anyway. Steering a bot
+     * around by writing its velocity every tick produces motion no key press could ever produce,
+     * and reads as such.
+     *
+     * @since 3.9
+     */
+    fun setVelocity(velocity: Vector)
 
     /**
      * Teleports the fake player, like a real player being teleported by the server. Fires

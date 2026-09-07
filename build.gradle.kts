@@ -8,7 +8,7 @@ plugins {
 // two segments (major.api). The BlueSpoof plugin itself uses three segments;
 // its first two segments always match the API version it exposes.
 group = "net.blueva.spoof"
-version = "3.7"
+version = "3.9"
 
 repositories {
     mavenLocal()
