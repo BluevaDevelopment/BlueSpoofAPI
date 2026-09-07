@@ -121,6 +121,31 @@ interface GameSession {
     fun settingList(path: String): List<String>
 
     /**
+     * Reads the values out of a message the game sent, using the game's own message template.
+     *
+     * Minigames announce what they are doing in prose: "Next colour: PINK", "30 seconds left",
+     * "RedTeam captured the wool". A bot can see that text on its own interface
+     * ([net.blueva.spoof.api.senses.HudSenses]) but cannot do much with it as a string. This turns
+     * it back into the values the game filled in.
+     *
+     * Given the template key the game uses (`messages.round.reveal`) and a line the bot received,
+     * returns the placeholders the template names, mapped to what they were filled in with. So a
+     * template of `"Next colour: {block}"` and a received line of `"Next colour: PINK"` gives
+     * `{block=PINK}`.
+     *
+     * Matching against the game's own template rather than against a hard-coded English phrase is
+     * what makes this survive translation: a server running in Spanish sends the Spanish template
+     * and the same call still returns `{block=ROSA}`. It also survives a server owner rewording
+     * their messages, as long as they leave the placeholders in.
+     *
+     * Empty when the game has no such template, when the line does not match it, or when the
+     * provider does not publish templates at all.
+     *
+     * @since 3.9
+     */
+    fun readMessage(templateKey: String, message: String): Optional<Map<String, String>>
+
+    /**
      * A provider-specific value, for behaviours written against one specific provider.
      *
      * Documented as unstable on purpose: anything reached through here is outside the contract the
