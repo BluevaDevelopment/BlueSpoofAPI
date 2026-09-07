@@ -37,6 +37,17 @@ interface HudSenses {
     fun scoreboardLines(): List<String>
 
     /**
+     * The sidebar lines with their colour and formatting codes intact.
+     *
+     * Worth having as well as the stripped version because in a Minecraft interface the colour is
+     * often the whole message: a traffic light rendered as a row of coloured blocks says nothing at
+     * all once stripped, and a team's colour is how a scoreboard says whose side something is on.
+     *
+     * @since 3.9
+     */
+    fun scoreboardLinesRaw(): List<String>
+
+    /**
      * The most recent title, if one is still worth considering current.
      *
      * @since 3.9
