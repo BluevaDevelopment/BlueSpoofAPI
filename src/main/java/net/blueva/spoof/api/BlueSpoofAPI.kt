@@ -1,5 +1,9 @@
 package net.blueva.spoof.api
 
+import net.blueva.spoof.api.behavior.HumanProfileRegistry
+import net.blueva.spoof.api.brain.BrainRegistry
+import net.blueva.spoof.api.game.GameRegistry
+import net.blueva.spoof.api.learning.LearningService
 import org.bukkit.Location
 import org.bukkit.entity.Player
 import java.util.Optional
@@ -8,22 +12,31 @@ import java.util.UUID
 /**
  * Entry point of the BlueSpoof public API.
  *
- * BlueSpoof spawns **fake players**: real server-side players (with physics,
- * inventory, health and tab-list presence) controlled by the server instead of a
- * network client. This API lets any plugin drive those fake players the same way
- * a real client would: walk, sprint, sneak, jump, look around, chat, swing, attack,
- * use items and follow paths.
+ * BlueSpoof spawns **fake players**: real server-side players, with physics, inventory, health and
+ * tab-list presence, controlled by the server instead of by a network client. This API lets any
+ * plugin drive them the way a client would, and lets any plugin teach them to play its own content.
  *
- * All methods are static and delegate to a [Provider] registered by the
- * BlueSpoof plugin while it is enabled. If BlueSpoof is not installed or not yet
- * enabled, every call throws [IllegalStateException]; guard with
- * [isAvailable] when your plugin soft-depends on BlueSpoof.
+ * There are two ways to use it, and most integrations want the second:
  *
- * @since 3.7
+ * 1. **Drive a bot directly.** Get a [FakePlayer], read [FakePlayer.senses], call
+ *    [FakePlayer.actuator]. Fine for scripted set pieces.
+ * 2. **Register a behaviour and let BlueSpoof run it.** Register a
+ *    [net.blueva.spoof.api.brain.BotBrainFactory] with [brains] and BlueSpoof attaches it to the
+ *    bots it claims, ticks it, arbitrates it against every other plugin's behaviours, and enforces
+ *    that the result still looks like a person. Register a
+ *    [net.blueva.spoof.api.game.GameSessionProvider] with [games] as well and your minigame becomes
+ *    something every behaviour on the server understands, including the ones you did not write.
+ *
+ * All methods are static and delegate to a [Provider] registered by the BlueSpoof plugin while it
+ * is enabled. If BlueSpoof is not installed or not yet enabled, every call throws
+ * [IllegalStateException]; guard with [isAvailable] when soft-depending on BlueSpoof.
+ *
+ * @since 3.9
  */
 object BlueSpoofAPI {
-    /** API version in `major.api` format (Blueva API versioning convention). */
-    const val VERSION: String = "3.7"
+
+    /** API version, in the `major.api` form used across Blueva APIs. */
+    const val VERSION: String = "3.9"
 
     @Volatile
     private var provider: Provider? = null
@@ -31,10 +44,8 @@ object BlueSpoofAPI {
     /**
      * Registers the API provider.
      *
-     * **Internal:** called exclusively by the BlueSpoof plugin on enable
-     * (and with `null` on disable). Never call this from a consumer plugin.
-     *
-     * @param newProvider the provider implementation, or `null` to unregister
+     * **Internal:** called exclusively by the BlueSpoof plugin on enable, and with `null` on
+     * disable. Never call this from a consumer plugin.
      */
     @JvmStatic
     fun setProvider(newProvider: Provider?) {
@@ -42,160 +53,150 @@ object BlueSpoofAPI {
     }
 
     /**
-     * Returns whether the BlueSpoof plugin is installed and its API is ready to use.
+     * Whether the BlueSpoof plugin is installed and its API is ready to use.
      *
-     * @return `true` if a provider is registered
-     * @since 3.7
+     * @since 3.9
      */
     @JvmStatic
-    fun isAvailable(): Boolean {
-        return provider != null
-    }
+    fun isAvailable(): Boolean = provider != null
 
     /**
-     * Returns the API version in `major.api` format.
+     * The API version.
      *
-     * @return the API version, e.g. `"1.0"`
-     * @since 3.7
+     * @since 3.9
      */
     @JvmStatic
-    fun getVersion(): String {
-        return VERSION
-    }
+    fun getVersion(): String = VERSION
+
+    // ------------------------------------------------------------------
+    // Fake players
+    // ------------------------------------------------------------------
 
     /**
-     * Returns all fake players currently online on this server.
+     * Every fake player currently online on this server.
      *
-     * @return immutable snapshot of online fake players
-     * @throws IllegalStateException if the API is not available
-     * @since 3.7
+     * @since 3.9
      */
     @JvmStatic
-    fun getFakePlayers(): MutableCollection<FakePlayer> {
-        return requireProvider().fakePlayers
-    }
+    fun getFakePlayers(): Collection<FakePlayer> = requireProvider().fakePlayers()
 
     /**
-     * Returns the online fake player with the given name, if present.
+     * The online fake player with the given name, if there is one.
      *
-     * @param name exact player name (case-sensitive)
-     * @return the fake player, or empty if no fake player with that name is online
-     * @throws IllegalStateException if the API is not available
-     * @since 3.7
+     * @param name exact player name, case-sensitive
+     * @since 3.9
      */
     @JvmStatic
-    fun getFakePlayer(name: String?): Optional<FakePlayer> {
-        return requireProvider().getFakePlayer(name)
-    }
+    fun getFakePlayer(name: String): Optional<FakePlayer> = requireProvider().getFakePlayer(name)
 
     /**
-     * Returns the online fake player with the given UUID, if present.
+     * The online fake player with the given UUID, if there is one.
      *
-     * @param uuid player UUID
-     * @return the fake player, or empty if no fake player with that UUID is online
-     * @throws IllegalStateException if the API is not available
-     * @since 3.7
+     * @since 3.9
      */
     @JvmStatic
-    fun getFakePlayer(uuid: UUID?): Optional<FakePlayer> {
-        return requireProvider().getFakePlayer(uuid)
-    }
+    fun getFakePlayer(uuid: UUID): Optional<FakePlayer> = requireProvider().getFakePlayer(uuid)
 
     /**
-     * Wraps a Bukkit [Player] as a [FakePlayer], if that player is a
-     * BlueSpoof fake player.
+     * The given Bukkit player as a [FakePlayer], if it is one.
      *
-     * @param player any online player
-     * @return the fake player handle, or empty if the player is real (or offline)
-     * @throws IllegalStateException if the API is not available
-     * @since 3.7
+     * @since 3.9
      */
     @JvmStatic
-    fun getFakePlayer(player: Player?): Optional<FakePlayer> {
-        return requireProvider().getFakePlayer(player)
-    }
+    fun getFakePlayer(player: Player): Optional<FakePlayer> = requireProvider().getFakePlayer(player)
 
     /**
-     * Returns whether the given player is a BlueSpoof fake player.
+     * Whether the given player is a BlueSpoof fake player.
      *
-     * @param player any player
-     * @return `true` if the player is a fake player created by BlueSpoof
-     * @throws IllegalStateException if the API is not available
-     * @since 3.7
+     * @since 3.9
      */
     @JvmStatic
-    fun isFakePlayer(player: Player?): Boolean {
-        return requireProvider().isFakePlayer(player)
-    }
+    fun isFakePlayer(player: Player): Boolean = requireProvider().isFakePlayer(player)
 
     /**
-     * Returns whether an online fake player with the given name exists.
+     * Whether an online fake player with the given name exists.
      *
-     * @param name exact player name
-     * @return `true` if a fake player with that name is online
-     * @throws IllegalStateException if the API is not available
-     * @since 3.7
+     * @since 3.9
      */
     @JvmStatic
-    fun isFakePlayer(name: String?): Boolean {
-        return requireProvider().isFakePlayer(name)
-    }
+    fun isFakePlayer(name: String): Boolean = requireProvider().isFakePlayer(name)
 
     /**
      * Connects a new fake player with the given name at the given location.
      *
-     * The fake player joins the server like a real player: join message,
-     * tab-list entry, skin, `PlayerJoinEvent`, survival game mode and full
-     * physics. Use [FakePlayer.disconnect] to remove it again.
+     * The fake player joins like a real one: join message, tab-list entry, skin, `PlayerJoinEvent`,
+     * survival game mode and full physics. Remove it again with [FakePlayer.disconnect].
      *
-     * @param name     player name (must be a valid Minecraft name, 3-16 characters)
-     * @param location spawn location
-     * @return the connected fake player
-     * @throws IllegalStateException    if the API is not available or a fake player
-     * with that name is already online
+     * @throws IllegalStateException if a fake player with that name is already online
      * @throws IllegalArgumentException if the name is not a valid Minecraft name
-     * @since 3.7
+     * @since 3.9
      */
     @JvmStatic
-    fun createFakePlayer(name: String?, location: Location?): FakePlayer {
-        return requireProvider().createFakePlayer(name, location)
-    }
+    fun createFakePlayer(name: String, location: Location): FakePlayer =
+        requireProvider().createFakePlayer(name, location)
+
+    // ------------------------------------------------------------------
+    // Services
+    // ------------------------------------------------------------------
+
+    /**
+     * Where behaviours are registered and arbitrated between plugins.
+     *
+     * @since 3.9
+     */
+    @JvmStatic
+    fun brains(): BrainRegistry = requireProvider().brains()
+
+    /**
+     * Where minigame plugins describe their running matches so that bots can understand them.
+     *
+     * @since 3.9
+     */
+    @JvmStatic
+    fun games(): GameRegistry = requireProvider().games()
+
+    /**
+     * Where the behavioural fingerprints that keep bots looking human are defined.
+     *
+     * @since 3.9
+     */
+    @JvmStatic
+    fun profiles(): HumanProfileRegistry = requireProvider().profiles()
+
+    /**
+     * Demonstrations recorded from real players, and the policies built from them.
+     *
+     * @since 3.9
+     */
+    @JvmStatic
+    fun learning(): LearningService = requireProvider().learning()
 
     private fun requireProvider(): Provider {
         val current = provider
-        checkNotNull(current) { "BlueSpoof API is not available: is the BlueSpoof plugin installed and enabled?" }
+        checkNotNull(current) {
+            "BlueSpoof API is not available: is the BlueSpoof plugin installed and enabled?"
+        }
         return current
     }
 
     /**
      * Provider contract implemented by the BlueSpoof plugin.
      *
-     * **Do not implement this in consumer plugins.** Methods added in future
-     * API versions will be declared as `default` so existing implementations
-     * keep working.
+     * **Do not implement this in a consumer plugin.**
      *
-     * @since 3.7
+     * @since 3.9
      */
     interface Provider {
-        /** @see BlueSpoofAPI.getFakePlayers */
-        val fakePlayers: MutableCollection<FakePlayer>
-
-        /** @see BlueSpoofAPI.getFakePlayer */
-        fun getFakePlayer(name: String?): Optional<FakePlayer>
-
-        /** @see BlueSpoofAPI.getFakePlayer */
-        fun getFakePlayer(uuid: UUID?): Optional<FakePlayer>
-
-        /** @see BlueSpoofAPI.getFakePlayer */
-        fun getFakePlayer(player: Player?): Optional<FakePlayer>
-
-        /** @see BlueSpoofAPI.isFakePlayer */
-        fun isFakePlayer(player: Player?): Boolean
-
-        /** @see BlueSpoofAPI.isFakePlayer */
-        fun isFakePlayer(name: String?): Boolean
-
-        /** @see BlueSpoofAPI.createFakePlayer */
-        fun createFakePlayer(name: String?, location: Location?): FakePlayer
+        fun fakePlayers(): Collection<FakePlayer>
+        fun getFakePlayer(name: String): Optional<FakePlayer>
+        fun getFakePlayer(uuid: UUID): Optional<FakePlayer>
+        fun getFakePlayer(player: Player): Optional<FakePlayer>
+        fun isFakePlayer(player: Player): Boolean
+        fun isFakePlayer(name: String): Boolean
+        fun createFakePlayer(name: String, location: Location): FakePlayer
+        fun brains(): BrainRegistry
+        fun games(): GameRegistry
+        fun profiles(): HumanProfileRegistry
+        fun learning(): LearningService
     }
 }

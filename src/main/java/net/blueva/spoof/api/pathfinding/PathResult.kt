@@ -10,14 +10,14 @@ import java.util.Collections
 class PathResult(
     /** The outcome status. */
     val status: PathStatus,
-    path: MutableList<PathNode>,
+    path: List<PathNode>,
     /** The node the fake player ended on, or `null` if navigation never started. */
     val finalNode: PathNode?,
     /** How many nodes the A* search expanded. */
     val nodesExplored: Int
 ) {
     /** The path followed (or the best partial path found on failure), immutable. */
-    val path: MutableList<PathNode> = Collections.unmodifiableList(ArrayList(path))
+    val path: List<PathNode> = Collections.unmodifiableList(ArrayList(path))
 
     /**
      * Returns whether the goal was reached.

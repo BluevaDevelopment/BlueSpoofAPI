@@ -28,7 +28,7 @@ interface Pathfinder {
      * [PathStatus.TIMEOUT], [PathStatus.STUCK], [PathStatus.CANCELLED], ...)
      * @since 3.7
      */
-    fun goTo(goal: Goal?): CompletableFuture<PathResult?>?
+    fun goTo(goal: Goal): CompletableFuture<PathResult>
 
     /**
      * Starts navigating to the given goal without waiting for the outcome.
@@ -81,7 +81,7 @@ interface Pathfinder {
      *
      * @since 3.7
      */
-    var movements: Movements?
+    var movements: Movements
 
     /**
      * Returns a snapshot of the path currently being followed.
@@ -89,7 +89,7 @@ interface Pathfinder {
      * @return immutable copy of the remaining path nodes, empty if idle
      * @since 3.7
      */
-    val currentPath: MutableList<PathNode?>?
+    val currentPath: List<PathNode>
 
     /**
      * Computes a path to the given goal without moving, using the current
@@ -101,5 +101,5 @@ interface Pathfinder {
      * was found)
      * @since 3.7
      */
-    fun getPathTo(goal: Goal?): CompletableFuture<PathResult?>?
+    fun getPathTo(goal: Goal): CompletableFuture<PathResult>
 }

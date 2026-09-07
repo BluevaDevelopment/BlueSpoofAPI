@@ -86,5 +86,5 @@ interface ContainerView {
      *
      * @return future completing once the container is closed
      */
-    fun close(): CompletableFuture<Void?>
+    fun close(): CompletableFuture<Void>
 }

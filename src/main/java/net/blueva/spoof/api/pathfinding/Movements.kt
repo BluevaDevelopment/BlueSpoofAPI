@@ -6,92 +6,75 @@ import kotlin.math.min
 /**
  * Movement configuration used by the [Pathfinder].
  *
- * Each fake player has its own instance; mutate it through
- * [Pathfinder.movements] or replace it with [Pathfinder.setMovements].
+ * Each fake player has its own instance, reached through [Pathfinder.movements]. Values are clamped
+ * to sane ranges on construction, so a caller cannot ask for a 500-block drop or a 10-millisecond
+ * search budget and quietly get one.
  *
- * @since 3.7
+ * @since 3.9
  */
-class Movements {
-
-    /** `true` if sprinting is allowed (default `true`). */
-    var isAllowSprinting: Boolean = true
-
-    /** `true` if diagonal moves are allowed (default `true`). */
-    var isAllowDiagonal: Boolean = true
-
-    /** `true` if parkour jumps are allowed (default `true`). */
-    var isAllowParkour: Boolean = true
-
-    private var backingMaxParkourGap: Int = 1
-
-    /** Maximum gap width (in blocks) the fake player may leap with a parkour jump (clamped to 1-3). */
-    var maxParkourGap: Int
-        get() = backingMaxParkourGap
-        set(value) {
-            backingMaxParkourGap = max(1, min(3, value))
+data class Movements(
+    /** Whether sprinting is allowed. */
+    @JvmField val allowSprinting: Boolean = true,
+    /** Whether diagonal moves are allowed. */
+    @JvmField val allowDiagonal: Boolean = true,
+    /** Whether parkour jumps across gaps are allowed. */
+    @JvmField val allowParkour: Boolean = true,
+    /** Widest gap in blocks a parkour jump may cross, clamped to 1 through 3. */
+    @JvmField val maxParkourGap: Int = 1,
+    /** Whether swimming is allowed. */
+    @JvmField val allowSwimming: Boolean = true,
+    /** Whether climbing ladders and vines is allowed. */
+    @JvmField val allowClimbing: Boolean = true,
+    /** Most blocks the fake player may drop down in one move, never negative. */
+    @JvmField val maxDropDown: Int = 4,
+    /** Most nodes the A* search may expand, or -1 for unlimited. */
+    @JvmField val searchRadius: Int = 10000,
+    /** Longest a path computation may take, in milliseconds, at least 250. */
+    @JvmField val thinkTimeoutMillis: Long = 10000L
+) {
+    init {
+        require(maxParkourGap == maxParkourGap.coerceIn(1, 3)) {
+            "maxParkourGap must be between 1 and 3, got $maxParkourGap"
         }
-
-    /** `true` if swimming is allowed (default `true`). */
-    var isAllowSwimming: Boolean = true
-
-    /** `true` if climbing is allowed (default `true`). */
-    var isAllowClimbing: Boolean = true
-
-    private var backingMaxDropDown: Int = 4
-
-    /** Maximum number of blocks the fake player may drop down in one move. */
-    var maxDropDown: Int
-        get() = backingMaxDropDown
-        set(value) {
-            backingMaxDropDown = max(0, value)
+        require(maxDropDown >= 0) { "maxDropDown cannot be negative, got $maxDropDown" }
+        require(thinkTimeoutMillis >= 250L) {
+            "thinkTimeoutMillis must be at least 250, got $thinkTimeoutMillis"
         }
-
-    private var backingSearchRadius: Int = 10000
-
-    /** Maximum number of nodes the A* search may expand, or `-1` for unlimited. */
-    var searchRadius: Int
-        get() = backingSearchRadius
-        set(value) {
-            backingSearchRadius = if (value < 0) -1 else value
-        }
-
-    private var backingThinkTimeoutMillis: Long = 10000L
-
-    /** Maximum wall-clock time a path computation may take, in milliseconds. */
-    var thinkTimeoutMillis: Long
-        get() = backingThinkTimeoutMillis
-        set(value) {
-            backingThinkTimeoutMillis = max(250L, value)
-        }
-
-    /**
-     * Creates a configuration with the default values.
-     */
-    constructor()
-
-    /**
-     * Copy constructor.
-     *
-     * @param other configuration to copy
-     */
-    constructor(other: Movements) {
-        this.isAllowSprinting = other.isAllowSprinting
-        this.isAllowDiagonal = other.isAllowDiagonal
-        this.isAllowParkour = other.isAllowParkour
-        this.backingMaxParkourGap = other.backingMaxParkourGap
-        this.isAllowSwimming = other.isAllowSwimming
-        this.isAllowClimbing = other.isAllowClimbing
-        this.backingMaxDropDown = other.backingMaxDropDown
-        this.backingSearchRadius = other.backingSearchRadius
-        this.backingThinkTimeoutMillis = other.backingThinkTimeoutMillis
     }
 
-    /**
-     * Returns a defensive copy of this configuration.
-     *
-     * @return copy
-     */
-    fun copy(): Movements {
-        return Movements(this)
+    companion object {
+        /** The default configuration. */
+        @JvmStatic
+        val DEFAULT: Movements = Movements()
+
+        /**
+         * A configuration with every clamped value coerced into range rather than rejected, for
+         * callers building one from user-supplied configuration.
+         *
+         * @since 3.9
+         */
+        @JvmStatic
+        @JvmOverloads
+        fun clamped(
+            allowSprinting: Boolean = true,
+            allowDiagonal: Boolean = true,
+            allowParkour: Boolean = true,
+            maxParkourGap: Int = 1,
+            allowSwimming: Boolean = true,
+            allowClimbing: Boolean = true,
+            maxDropDown: Int = 4,
+            searchRadius: Int = 10000,
+            thinkTimeoutMillis: Long = 10000L
+        ): Movements = Movements(
+            allowSprinting,
+            allowDiagonal,
+            allowParkour,
+            min(3, max(1, maxParkourGap)),
+            allowSwimming,
+            allowClimbing,
+            max(0, maxDropDown),
+            if (searchRadius < 0) -1 else searchRadius,
+            max(250L, thinkTimeoutMillis)
+        )
     }
 }

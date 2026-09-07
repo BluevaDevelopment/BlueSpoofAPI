@@ -44,7 +44,7 @@ interface BotInventory {
      *
      * @return the held item, or `null` when empty-handed
      */
-    fun getHeldItem(): ItemStack?
+    fun getHeldItem(): ItemStack
 
     /**
      * Returns the first slot containing the given material, or `-1`.
@@ -60,7 +60,7 @@ interface BotInventory {
      * @param material the material to find
      * @return list of matching slot indices (empty if none)
      */
-    fun findAll(material: Material): MutableList<Int>
+    fun findAll(material: Material): List<Int>
 
     /**
      * Returns the total amount of the given material across the inventory.
