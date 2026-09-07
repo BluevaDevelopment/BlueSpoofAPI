@@ -97,6 +97,30 @@ interface GameSession {
     fun regionKeys(): Set<String>
 
     /**
+     * A value from the game's own configuration, by dotted path.
+     *
+     * This is how a behaviour learns the things a game is *configured* to do rather than the things
+     * it is currently doing: which block a floor decays into, how long a round lasts, which item
+     * marks the objective. A server owner who retunes their minigame retunes the bots with it, for
+     * free, because both read the same setting.
+     *
+     * Paths are the game's own, so a behaviour asking for one is coupled to that game, which is
+     * fine: it is a behaviour for that game. A behaviour that asks for a path the game does not
+     * have gets an empty optional and should have a default ready.
+     *
+     * @since 3.9
+     */
+    fun setting(path: String): Optional<String>
+
+    /**
+     * A list value from the game's own configuration. Empty when the path is missing or is not a
+     * list.
+     *
+     * @since 3.9
+     */
+    fun settingList(path: String): List<String>
+
+    /**
      * A provider-specific value, for behaviours written against one specific provider.
      *
      * Documented as unstable on purpose: anything reached through here is outside the contract the
