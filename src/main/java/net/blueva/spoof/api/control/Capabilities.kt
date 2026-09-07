@@ -49,10 +49,15 @@ interface Capabilities {
     fun containerClicks(): Boolean
 
     /**
-     * Whether [Actuator.moveInput] drives real client-style analog input. When `false`, analog
-     * input is quantised onto the seven [net.blueva.spoof.api.ControlState] keys by a
-     * physics-approximating stepper, which is accurate enough for walking but not for
-     * frame-precise parkour.
+     * Whether movement is resolved by the server's own physics rather than approximated.
+     *
+     * [Actuator.moveInput] takes analog axes on every supported version: they reach the same
+     * impulses a real client sends, so a bot can walk at two thirds speed anywhere. What differs is
+     * what happens next. When this is `true` the server's own `travel()` resolves friction,
+     * acceleration, gravity and collisions exactly as it does for a real player. When it is `false`
+     * a stepper approximates that, which is accurate enough for walking and for reaching a
+     * destination, but not for movement that has to be frame-exact, such as a parkour jump measured
+     * in fractions of a block.
      *
      * @since 3.9
      */
